@@ -1,0 +1,172 @@
+@model IEnumerable<Stacklt_Odoo.Models.Question>
+
+@{
+    ViewData["Title"] = "Questions";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 mb-0">
+                    <i class="fas fa-question-circle me-2"></i>Questions
+                </h1>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a asp-action="Ask" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Ask Question
+                    </a>
+                }
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-6">
+                            <input type="text" name="search" class="form-control" placeholder="Search questions..." 
+                                   value="@ViewBag.Search" />
+                        </div>
+                        <div class="col-md-3">
+                            <select name="sort" class="form-select">
+                                <option value="newest" selected="@(ViewBag.Sort == "newest")">Newest</option>
+                                <option value="oldest" selected="@(ViewBag.Sort == "oldest")">Oldest</option>
+                                <option value="most-answers" selected="@(ViewBag.Sort == "most-answers")">Most Answers</option>
+                                <option value="unanswered" selected="@(ViewBag.Sort == "unanswered")">Unanswered</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-search me-1"></i>Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Questions List -->
+            @if (Model.Any())
+            {
+                <div class="row">
+                    @foreach (var question in Model)
+                    {
+                        <div class="col-12 mb-3">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <!-- Stats Column -->
+                                        <div class="col-md-2 text-center">
+                                            <div class="mb-2">
+                                                <div class="h5 text-muted">@question.Answers.Count</div>
+                                                <small class="text-muted">answers</small>
+                                            </div>
+                                            @if (question.AcceptedAnswerId.HasValue)
+                                            {
+                                                <div class="text-success">
+                                                    <i class="fas fa-check-circle"></i>
+                                                    <small>Accepted</small>
+                                                </div>
+                                            }
+                                        </div>
+
+                                        <!-- Content Column -->
+                                        <div class="col-md-10">
+                                            <h5 class="card-title">
+                                                <a asp-action="Details" asp-route-id="@question.QuestionId" 
+                                                   class="text-decoration-none text-dark">
+                                                    @question.Title
+                                                </a>
+                                            </h5>
+                                            <p class="card-text text-muted">
+                                                @(question.Description.Length > 200 ? question.Description.Substring(0, 200) + "..." : question.Description)
+                                            </p>
+                                            
+                                            <!-- Tags -->
+                                            @if (question.QuestionTags.Any())
+                                            {
+                                                <div class="mb-2">
+                                                    @foreach (var questionTag in question.QuestionTags)
+                                                    {
+                                                        <span class="badge bg-light text-dark me-1">@questionTag.Tag.TagName</span>
+                                                    }
+                                                </div>
+                                            }
+                                            
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-user me-1"></i>@question.User.Username
+                                                    <i class="fas fa-clock ms-3 me-1"></i>@question.CreatedAt.ToString("MMM dd, yyyy")
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No questions found</h4>
+                    <p class="text-muted">
+                        @if (!string.IsNullOrEmpty(ViewBag.Search))
+                        {
+                            <span>No questions match your search criteria.</span>
+                        }
+                        else
+                        {
+                            <span>Be the first to ask a question!</span>
+                        }
+                    </p>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <a asp-action="Ask" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Ask a Question
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Quick Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="h4 text-primary">@Model.Count()</div>
+                            <small class="text-muted">Questions</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h4 text-success">@Model.Count(q => q.AcceptedAnswerId.HasValue)</div>
+                            <small class="text-muted">Answered</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (!User.Identity?.IsAuthenticated == true)
+            {
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i>Join the Community</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <p class="card-text">Create an account to ask questions and provide answers.</p>
+                        <a asp-controller="Account" asp-action="Register" class="btn btn-success">
+                            <i class="fas fa-user-plus me-1"></i>Register
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div> 

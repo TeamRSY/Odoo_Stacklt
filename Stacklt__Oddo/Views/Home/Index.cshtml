@@ -1,0 +1,177 @@
+﻿@model IEnumerable<Stacklt_Odoo.Models.Question>
+@{
+    ViewData["Title"] = "Home";
+    var currentPage = ViewBag.CurrentPage as int? ?? 1;
+    var totalPages = ViewBag.TotalPages as int? ?? 1;
+    var search = ViewBag.Search as string ?? "";
+    var filter = ViewBag.Filter as string ?? "newest";
+}
+
+<div class="container mt-4">
+    <!-- Hero Section -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto text-center">
+            <h1 class="display-4 fw-bold text-primary mb-3">
+                <i class="fas fa-layer-group me-3"></i>Welcome to StackIt
+            </h1>
+            <p class="lead mb-4">
+                A minimal Q&A platform for collaborative learning and structured knowledge sharing.
+                Ask questions, share answers, and grow together with the community.
+            </p>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a asp-controller="Questions" asp-action="Ask" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>Ask a Question
+                </a>
+                <a asp-controller="Questions" asp-action="Index" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-question-circle me-2"></i>Browse Questions
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Questions List -->
+        <div class="col-lg-8 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h3 mb-0">
+                    <i class="fas fa-clock me-2"></i>Recent Questions
+                </h2>
+                <form method="get" class="d-flex" style="max-width: 350px;">
+                    <input type="hidden" name="filter" value="@filter" />
+                    <input type="text" name="search" class="form-control me-2" placeholder="Search" value="@search" />
+                    <button type="submit" class="btn btn-outline-primary"><i class="fas fa-search"></i></button>
+                </form>
+            </div>
+            <div class="mb-3">
+                <div class="btn-group mb-3">
+                    <a asp-action="Index" asp-route-filter="newest" class="btn btn-outline-primary @(filter=="newest" ? "active" : "")">Newest</a>
+                    <a asp-action="Index" asp-route-filter="unanswered" class="btn btn-outline-primary @(filter=="unanswered" ? "active" : "")">Unanswered</a>
+                    <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">more</button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" asp-action="Index" asp-route-filter="oldest">Oldest</a></li>
+                    </ul>
+                </div>
+            </div>
+            @if (Model.Any())
+            {
+                @foreach (var question in Model)
+                {
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-body d-flex flex-column flex-md-row align-items-start position-relative">
+                            <div class="flex-grow-1">
+                                <h5 class="fw-bold mb-1">@question.Title</h5>
+                                <div class="mb-2">
+                                    @foreach (var tag in question.QuestionTags.Select(qt => qt.Tag))
+                                    {
+                                        <span class="badge bg-light text-primary border border-primary me-1">@tag.TagName</span>
+                                    }
+                                </div>
+                                <div class="text-muted mb-2" style="max-width: 700px;">
+                                    @(question.Description.Length > 120 ? Html.Raw(question.Description.Substring(0, 120) + "...") : Html.Raw(question.Description))
+                                </div>
+                                <div class="text-secondary small">@question.User.Username</div>
+                            </div>
+                            <div class="ms-md-3 mt-3 mt-md-0 d-flex flex-column align-items-center">
+                                <span class="badge bg-primary text-white fs-6 px-3 py-2">@question.Answers.Count ans</span>
+                                <a asp-controller="Questions" asp-action="Details" asp-route-id="@question.QuestionId" class="btn btn-link mt-2 p-0">View</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No questions found</h4>
+                    <p class="text-muted">Be the first to ask a question!</p>
+                    <a asp-controller="Questions" asp-action="Ask" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Ask a Question
+                    </a>
+                </div>
+            }
+            <!-- Pagination -->
+            @if (totalPages > 1)
+            {
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center flex-wrap">
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-filter="@filter" asp-route-search="@search">&lt;</a>
+                        </li>
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == currentPage ? "active" : "")">
+                                <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-filter="@filter" asp-route-search="@search">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-filter="@filter" asp-route-search="@search">&gt;</a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>About StackIt</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        StackIt is a minimal question-and-answer platform designed for collaborative learning 
+                        and structured knowledge sharing.
+                    </p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i>Ask questions with rich text</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Vote on answers</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Tag your questions</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Real-time notifications</li>
+                    </ul>
+                </div>
+            </div>
+
+            @if (!User.Identity?.IsAuthenticated == true)
+            {
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i>Join the Community</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <p class="card-text">Create an account to ask questions, provide answers, and vote on content.</p>
+                        <a asp-controller="Account" asp-action="Register" class="btn btn-success me-2">
+                            <i class="fas fa-user-plus me-1"></i>Register
+                        </a>
+                        <a asp-controller="Account" asp-action="Login" class="btn btn-outline-success">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
+                    </div>
+                </div>
+            }
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-share me-2"></i>Share</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="https://twitter.com/intent/tweet?text=Check%20out%20StackIt%20Q%26A%20Platform!&url=@(Context.Request.Scheme + "://" + Context.Request.Host)" 
+                           target="_blank" class="btn btn-outline-primary">
+                            <i class="fab fa-twitter me-1"></i>Share on Twitter
+                        </a>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u=@(Context.Request.Scheme + "://" + Context.Request.Host)" 
+                           target="_blank" class="btn btn-outline-primary">
+                            <i class="fab fa-facebook me-1"></i>Share on Facebook
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Optionally, add JS for dropdown or other UI tweaks
+    </script>
+}

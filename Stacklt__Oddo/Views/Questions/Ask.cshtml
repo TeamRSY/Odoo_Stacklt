@@ -1,0 +1,154 @@
+@model Stacklt_Odoo.Models.ViewModels.QuestionViewModel
+
+@{
+    ViewData["Title"] = "Ask Question";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-plus me-2"></i>Ask a Question
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Ask" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label fw-bold"></label>
+                            <input asp-for="Title" class="form-control" placeholder="What's your question? Be specific." />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                            <small class="form-text text-muted">Make sure your title clearly describes your problem.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label fw-bold">Description</label>
+                            <div id="editor" style="height: 300px;"></div>
+                            <input type="hidden" asp-for="Description" id="descriptionInput" />
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                Provide all the information someone would need to answer your question. 
+                                You can use <strong>bold</strong>, <em>italic</em>, code blocks, and more.
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tags</label>
+                            <input type="text" id="tagInput" class="form-control" placeholder="Add tags (e.g., javascript, react, asp.net)" />
+                            <div id="tagContainer" class="mt-2"></div>
+                            <small class="form-text text-muted">Add up to 5 tags to help categorize your question.</small>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-1"></i>Post Question
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Quill.js -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        // Initialize Quill editor
+        var quill = new Quill('#editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['blockquote', 'code-block'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'script': 'sub'}, { 'script': 'super' }],
+                    [{ 'indent': '-1'}, { 'indent': '+1' }],
+                    [{ 'direction': 'rtl' }],
+                    [{ 'size': ['small', false, 'large', 'huge'] }],
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'font': [] }],
+                    [{ 'align': [] }],
+                    ['clean'],
+                    ['link', 'image', 'video']
+                ]
+            },
+            placeholder: 'Describe your question in detail...'
+        });
+
+        // Update hidden input when editor content changes
+        quill.on('text-change', function() {
+            document.getElementById('descriptionInput').value = quill.root.innerHTML;
+        });
+
+        // Tag input functionality
+        let tags = [];
+        const tagInput = document.getElementById('tagInput');
+        const tagContainer = document.getElementById('tagContainer');
+
+        tagInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                addTag();
+            }
+        });
+
+        function addTag() {
+            const tag = tagInput.value.trim().toLowerCase();
+            if (tag && tags.length < 5 && !tags.includes(tag)) {
+                tags.push(tag);
+                updateTagDisplay();
+                tagInput.value = '';
+            }
+        }
+
+        function removeTag(tag) {
+            tags = tags.filter(t => t !== tag);
+            updateTagDisplay();
+        }
+
+        function updateTagDisplay() {
+            tagContainer.innerHTML = '';
+            tags.forEach(tag => {
+                const tagElement = document.createElement('span');
+                tagElement.className = 'badge bg-primary me-2 mb-2';
+                tagElement.innerHTML = `
+                    ${tag}
+                    <button type="button" class="btn-close btn-close-white ms-2" 
+                            onclick="removeTag('${tag}')" style="font-size: 0.5em;"></button>
+                `;
+                tagContainer.appendChild(tagElement);
+            });
+
+            // Update hidden input for form submission
+            const tagInputs = tags.map(tag => `<input type="hidden" name="Tags" value="${tag}" />`).join('');
+            tagContainer.innerHTML += tagInputs;
+        }
+
+        // Form submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            // Update description from Quill
+            document.getElementById('descriptionInput').value = quill.root.innerHTML;
+            
+            // Validate tags
+            if (tags.length === 0) {
+                e.preventDefault();
+                alert('Please add at least one tag to help categorize your question.');
+                return;
+            }
+        });
+    </script>
+} 

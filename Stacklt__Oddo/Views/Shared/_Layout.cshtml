@@ -1,0 +1,134 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - StackIt</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Stacklt_Odoo.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-primary border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="fas fa-layer-group me-2"></i>StackIt
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="Index">
+                                <i class="fas fa-home me-1"></i>Home
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" asp-area="" asp-controller="Questions" asp-action="Ask">
+                                <i class="fas fa-plus me-1"></i>Ask Question
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <ul class="navbar-nav">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link text-white dropdown-toggle position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-bell me-1"></i>
+                                    <span class="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle p-1" id="notificationCount" style="font-size:0.8em;">0</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown" id="notificationList" style="min-width: 320px; max-width: 400px;">
+                                    <li class="dropdown-item text-center text-muted">Loading...</li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link text-white dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user me-1"></i>@User.Identity.Name
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile"><i class="fas fa-user-circle me-2"></i>Profile</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="MyQuestions"><i class="fas fa-question me-2"></i>My Questions</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="MyAnswers"><i class="fas fa-reply me-2"></i>My Answers</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-controller="Account" asp-action="Login">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Login
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-controller="Account" asp-action="Register">
+                                    <i class="fas fa-user-plus me-1"></i>Register
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2025 - StackIt - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        function fetchNotifications() {
+            $.get('/Account/Notifications', function (data) {
+                var list = $('#notificationList');
+                var count = data.unreadCount || 0;
+                $('#notificationCount').text(count);
+                list.empty();
+                if (data.notifications && data.notifications.length > 0) {
+                    data.notifications.forEach(function (n) {
+                        var icon = n.isRead ? 'fa-regular fa-circle' : 'fa-solid fa-circle text-primary';
+                        var item = `<li><a class="dropdown-item d-flex align-items-start gap-2 ${(n.isRead ? '' : 'fw-bold')}" href="#">
+                            <i class="${icon} mt-1"></i>
+                            <span>${n.message}</span>
+                            <small class="ms-auto text-muted" style="font-size:0.8em;">${new Date(n.createdAt).toLocaleString()}</small>
+                        </a></li>`;
+                        list.append(item);
+                    });
+                } else {
+                    list.append('<li class="dropdown-item text-center text-muted">No notifications</li>');
+                }
+            });
+        }
+        $(function () {
+            $('#notificationDropdown').on('show.bs.dropdown', function () {
+                fetchNotifications();
+                $.post('/Account/MarkNotificationsRead');
+                setTimeout(fetchNotifications, 500);
+            });
+            fetchNotifications();
+            setInterval(fetchNotifications, 30000);
+        });
+    </script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
